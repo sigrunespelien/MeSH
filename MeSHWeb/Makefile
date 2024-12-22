@@ -45,11 +45,9 @@ clean:
 	-rm -f $(PROGRAM) $(OBJECTS) $(DEPS)
 
 install:
-	sudo cp strings.xml /opt/Helsebib/MeSHWeb/ && \
-        sudo cp wt_config.xml /opt/Helsebib/MeSHWeb/ && \
-        sudo cp MeSH.css /opt/Helsebib/MeSHWeb/ && \
-        sudo rm -rf /opt/Helsebib/MeSHWeb/images && sudo cp -ar images /opt/Helsebib/MeSHWeb/ && \
-        sudo cp MeSHWeb_ssl.sh /opt/Helsebib/MeSHWeb/ && \
-        sudo cp startup-script.sh /etc/init.d/MeSHWeb.sh && sudo chmod 755 /etc/init.d/MeSHWeb.sh && \
+	cp strings.xml /opt/Helsebib/MeSHWeb/ && \
+        cp wt_config.xml /opt/Helsebib/MeSHWeb/ && \
+        cp MeSH.css /opt/Helsebib/MeSHWeb/ && \
+        rm -rf /opt/Helsebib/MeSHWeb/images && cp -ar images /opt/Helsebib/MeSHWeb/ && \
         strip -s $(PROGRAM) && \
-        sudo cp $(PROGRAM) /opt/Helsebib/MeSHWeb/
+        cp $(PROGRAM) /opt/Helsebib/MeSHWeb/

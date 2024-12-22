@@ -36,6 +36,7 @@ WORKDIR /projects/MeSH/MeSHWeb
 
 RUN ln -sf ../MeSHImport/cpp-elasticsearch . && \
     ln -sf /usr/local/share/Wt/resources . && \
+    mkdir -p /opt/Helsebib/MeSHWeb/ && \
     ln -sf /usr/local/share/Wt/resources /opt/Helsebib/MeSHWeb/ && \
     make -j2 && \
     make install
