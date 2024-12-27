@@ -1,11 +1,8 @@
-FROM debian:bookworm-slim AS builder
+FROM bitnami/minideb:bookworm AS builder
 
 ARG WT_VERSION=4.11.1
-ARG DEBIAN_FRONTEND=noninteractive
 
-RUN apt-get --assume-yes update && \
-    apt-get --assume-yes dist-upgrade && \
-    apt-get --assume-yes install git g++ libssl-dev libxml2-dev libboost-all-dev cmake make
+RUN install_packages ca-certificates git g++ libssl-dev libxml2-dev libboost-all-dev cmake make
 
 WORKDIR /projects
 
@@ -19,9 +16,8 @@ RUN gunzip ${WT_VERSION}.tar.gz && \
 WORKDIR /projects/wt/build
 
 RUN cmake ../ -DENABLE_LIBWTDBO:BOOL=OFF && \
-    make -j2 && \
-    make install && \
-    ldconfig
+    make -j$(nproc) && \
+    make install
 
 WORKDIR /projects
 
@@ -30,7 +26,7 @@ RUN git clone -b feature/docker --single-branch https://github.com/sigrunespelie
 WORKDIR /projects/MeSH/MeSHImport
 
 RUN git clone https://github.com/frodegill/cpp-elasticsearch.git && \
-    make -j2
+    make -j$(nproc)
 
 WORKDIR /projects/MeSH/MeSHWeb
 
@@ -38,19 +34,42 @@ RUN ln -sf ../MeSHImport/cpp-elasticsearch . && \
     ln -sf /usr/local/share/Wt/resources . && \
     mkdir -p /opt/Helsebib/MeSHWeb/ && \
     ln -sf /usr/local/share/Wt/resources /opt/Helsebib/MeSHWeb/ && \
-    make -j2 && \
+    make -j$(nproc) && \
     make install
+
+RUN ls -la /opt/Helsebib/MeSHWeb/
 
 
 FROM bitnami/minideb:bookworm AS mesh-import
 
-COPY --from=builder /usr/local/bin/MeSHImport /projects/MeSH/MeSHImport/nordesc_topnodes.xml /app
-COPY nordesc2019.xml /app
+RUN install_packages libxml2
 
-ENTRYPOINT ["/app/MeSHImport" "elasticsearch:9200" "--clean" "--topnodes" "/app/nordesc_topnodes.xml" "/app/nordesc2019.xml"]
+COPY --from=builder /projects/MeSH/MeSHImport/MeSHImport /projects/MeSH/MeSHImport/nordesc_topnodes.xml /app/
+COPY nordesc2019.xml /app/
+
+ENTRYPOINT ["/app/MeSHImport", "elasticsearch:9200", "--clean", "--topnodes", "/app/nordesc_topnodes.xml", "/app/nordesc2019.xml"]
+
 
 FROM bitnami/minideb:bookworm AS mesh
 
-RUN install_packages unattended-upgrades
+ARG BOOST_VERSION=1.74.0
 
+RUN install_packages unattended-upgrades libssl3 libxml2 \
+                     libboost-locale${BOOST_VERSION} \
+                     libboost-system${BOOST_VERSION} \
+                     libboost-filesystem${BOOST_VERSION} \
+                     libboost-program-options${BOOST_VERSION}
+
+RUN echo "/usr/local/lib" > /etc/ld.so.conf.d/local-lib.conf
 COPY --from=builder /usr/local/lib/libwt* /usr/local/lib/
+RUN ldconfig
+
+COPY --from=builder /usr/local/share/Wt/resources /usr/local/share/Wt/
+
+RUN useradd -MU mesh
+
+USER mesh
+
+COPY --from=builder /opt/Helsebib/MeSHWeb /app
+
+ENTRYPOINT ["/app/MeSHWeb", "--docroot", ".", "--config", "/app/wt_config.xml", "--http-listen", "0.0.0.0:8443"]
