@@ -11,17 +11,6 @@ services:
     networks:
       - mesh-network
 
-  mesh-import:
-    build:
-      context: .
-      target: mesh-import
-    depends_on:
-      elasticsearch:
-        condition: service_healthy
-    networks:
-      - mesh-network
-    restart: "no"
-
 networks:
   mesh-network:
     driver: bridge

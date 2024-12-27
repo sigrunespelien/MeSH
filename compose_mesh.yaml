@@ -1,0 +1,15 @@
+services:
+  mesh:
+    build:
+      context: .
+      target: mesh
+    ports:
+      - "8443:8443"
+    expose:
+      - "8443/tcp"
+    networks:
+      - mesh-network
+
+networks:
+  mesh-network:
+    driver: bridge

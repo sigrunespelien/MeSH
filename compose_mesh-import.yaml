@@ -1,0 +1,12 @@
+services:
+  mesh-import:
+    build:
+      context: .
+      target: mesh-import
+    networks:
+      - mesh-network
+    restart: "no"
+
+networks:
+  mesh-network:
+    driver: bridge

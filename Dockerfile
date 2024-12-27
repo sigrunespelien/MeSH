@@ -37,8 +37,6 @@ RUN ln -sf ../MeSHImport/cpp-elasticsearch . && \
     make -j$(nproc) && \
     make install
 
-RUN ls -la /opt/Helsebib/MeSHWeb/
-
 
 FROM bitnami/minideb:bookworm AS mesh-import
 
